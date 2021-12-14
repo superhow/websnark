@@ -26,7 +26,7 @@ const inBrowser = (typeof window !== "undefined");
 let NodeWorker;
 let NodeCrypto;
 if (!inBrowser) {
-    NodeWorker = require("worker_threads").Worker;
+//     NodeWorker = require("worker_threads").Worker;
     NodeCrypto = require("crypto");
 }
 
@@ -237,7 +237,7 @@ async function build(params) {
             groth16.workers[i].onmessage = getOnMsg(i);
 
         } else {
-            groth16.workers[i] = new NodeWorker("(" + thread.toString()+ ")(require('worker_threads').parentPort);", {eval: true});
+//             groth16.workers[i] = new NodeWorker("(" + thread.toString()+ ")(require('worker_threads').parentPort);", {eval: true});
 
             groth16.workers[i].on("message", getOnMsg(i));
         }
