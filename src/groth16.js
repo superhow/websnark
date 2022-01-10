@@ -185,7 +185,7 @@ async function build(params) {
     groth16.memory = new WebAssembly.Memory({initial:defaultParams.wasmInitialMemory});
     groth16.i32 = new Uint32Array(groth16.memory.buffer);
 
-    console.log('groth16_wasm.code: ', groth16_wasm.code);
+//     console.log('groth16_wasm.code: ', groth16_wasm.code);
     const wasmModule = await WebAssembly.compile(groth16_wasm.code);
 
     groth16.instance = await WebAssembly.instantiate(wasmModule, {
