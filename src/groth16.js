@@ -23,7 +23,7 @@ const groth16_wasm = require("../build/groth16_wasm.js");
 const assert = require("assert");
 
 const inBrowser = (typeof window !== "undefined");
-let NodeWorker;
+
 let NodeCrypto;
 if (!inBrowser) {
 //     NodeWorker = require("worker_threads").Worker;
@@ -46,7 +46,7 @@ function delay(ms) {
 }
 */
 
-function thread(self) {
+const threadCode = `function thread(self) {
     let instance;
     let memory;
     let i32;
@@ -167,7 +167,7 @@ function thread(self) {
             process.exit();
         }
     };
-}
+}`
 
 // We use the Object.assign approach for the backwards compatibility
 // @params Number wasmInitialMemory 
@@ -185,6 +185,7 @@ async function build(params) {
     groth16.memory = new WebAssembly.Memory({initial:defaultParams.wasmInitialMemory});
     groth16.i32 = new Uint32Array(groth16.memory.buffer);
 
+    console.log('groth16_wasm.code: ', groth16_wasm.code);
     const wasmModule = await WebAssembly.compile(groth16_wasm.code);
 
     groth16.instance = await WebAssembly.instantiate(wasmModule, {
@@ -227,21 +228,12 @@ async function build(params) {
     }
 
     for (let i = 0; i<concurrency; i++) {
+        const blob = new Blob(["(", threadCode, ")(self);"], { type: "text/javascript" });
+        const url = URL.createObjectURL(blob);
 
-        if (inBrowser) {
-            const blob = new Blob(["(", thread.toString(), ")(self);"], { type: "text/javascript" });
-            const url = URL.createObjectURL(blob);
+        groth16.workers[i] = new Worker(url);
 
-            groth16.workers[i] = new Worker(url);
-
-            groth16.workers[i].onmessage = getOnMsg(i);
-
-        } else {
-//             groth16.workers[i] = new NodeWorker("(" + thread.toString()+ ")(require('worker_threads').parentPort);", {eval: true});
-
-            groth16.workers[i].on("message", getOnMsg(i));
-        }
-
+        groth16.workers[i].onmessage = getOnMsg(i);
         groth16.working[i]=false;
     }
 
